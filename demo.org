@@ -1,0 +1,75 @@
+#+TITLE: Building Emacs from Source
+#+SUBTITLE: RedHat Edition
+#+AUTHOR: Fabricio Puente M
+#+EMAIL: fab@muppetlabs.com
+#+EXCLUDE_TAGS: noexport debian
+#+OPTIONS: email:t tags:nil toc:nil
+#+MACRO: p call_get_prop("$1")
+#+MACRO: pr call_get_prop[:results raw]("$1")
+#+EXPORT_FILE_NAME: rh_buildemacs
+
+* README :noexport:
+This is a literate document that can potentially execute code on your computer! It's about how to
+build Emacs on Debian and Redhat machines.
+
+This document will differ slightly depending in which version of the document you chose to
+export. By default, if this document is not altered in any way, the exported version will discuss
+how to install GNU Emacs on RedHat based systems.
+
+If you wish to export the RedHat/Fedora specific version of the document, you will first need to:
+
+- change the "#+SUBTITLE:" line at the top of the document to read "Debian Edition".
+- change the "#+EXCLUDE_TAGS:" line at the top of the document to "noexport redhat".
+- change the "#+EXPORT_FILE_NAME:" line at the top of the document to "deb_buildemacs".
+- change the":prefix:" property in section "Document constants" section to "deb_".
+
+Alternatively, you can just hit =C-c C-c= on the block below to have Emacs to this for you!
+
+#+NAME: switch_distro
+#+BEGIN_SRC elisp :results none :eval never-export :var os="Debian"
+
+#+END_SRC
+* Document constants :noexport:
+:PROPERTIES:
+:prefix: rh_
+:deb_distro: Debian
+:rh_distro: RedHat
+:deb_install: sudo apt-get install -qq
+:rh_install: sudo dnf install -y
+:deb_ncurses: libncurses-dev
+:rh_ncurses: ncurses-devel
+:END:
+
+* Code :noexport:
+#+NAME: startup
+#+begin_src elisp :results none
+(load-theme 'modus-vivendi)
+(setf fill-column 100)
+#+end_src
+
+#+name: get_prop
+#+begin_src elisp :var prop="distro"
+    (let ((ret (org-property-values prop))
+          (prefix (org-property-values "prefix")))
+      (if ret
+          (car ret)
+        (when prefix
+          (car (org-property-values (concat (car prefix) prop))))))
+#+end_src
+
+#+RESULTS: get_prop
+: Debian
+
+* Introduction
+In this document we'll show how you can build GNU Emacs on
+{{{pr(distro)}}} based Linux distros!
+
+- Install: {{{pr(install)}}}
+- ncurses: {{{pr(ncurses)}}}
+
+* Fun fact :debian:
+Debian is a portmanteau of
+# Local Variables:
+# org-confirm-babel-evaluate: (lambda (lang body) (not (string= lang "elisp")))
+# eval: (org-babel-goto-named-src-block "startup") (org-babel-execute-src-block)
+# End:
