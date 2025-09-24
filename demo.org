@@ -1,12 +1,12 @@
 #+TITLE: Building Emacs from Source
-#+SUBTITLE: RedHat Edition
+#+SUBTITLE: Debian Edition
 #+AUTHOR: Fabricio Puente M
 #+EMAIL: fab@muppetlabs.com
-#+EXCLUDE_TAGS: noexport debian
+#+EXCLUDE_TAGS: noexport redhat
 #+OPTIONS: email:t tags:nil toc:nil
 #+MACRO: p call_get_prop("$1")
 #+MACRO: pr call_get_prop[:results raw]("$1")
-#+EXPORT_FILE_NAME: rh_buildemacs
+#+EXPORT_FILE_NAME: deb_buildemacs
 
 * README :noexport:
 This is a literate document that can potentially execute code on your computer! It's about how to
@@ -26,7 +26,7 @@ If you wish to export the RedHat/Fedora specific version of the document, you wi
 Alternatively, you can just hit =C-c C-c= on the block below to have Emacs to this for you!
 
 #+NAME: switch_distro
-#+BEGIN_SRC elisp :results none :eval never-export :var os="RedHat"
+#+BEGIN_SRC elisp :results none :eval never-export :var os="Debian"
   (let* ((debian (string= os "Debian"))
          (no_export (if debian "redhat" "debian"))
          (prefix (if debian "deb_" "rh_")))
@@ -43,7 +43,7 @@ Alternatively, you can just hit =C-c C-c= on the block below to have Emacs to th
 #+END_SRC
 * Document constants :noexport:
 :PROPERTIES:
-:prefix: rh_
+:prefix: deb_
 :deb_distro: Debian
 :rh_distro: RedHat
 :deb_install: sudo apt-get install -qq
@@ -55,8 +55,8 @@ Alternatively, you can just hit =C-c C-c= on the block below to have Emacs to th
 * Code :noexport:
 #+NAME: startup
 #+begin_src elisp :results none
-(load-theme 'modus-vivendi)
-(setf fill-column 100)
+  (load-theme 'modus-vivendi)
+  (setf fill-column 100)
 #+end_src
 
 #+name: get_prop
@@ -81,7 +81,11 @@ In this document we'll show how you can build GNU Emacs on
 
 * Fun fact :debian:
 Debian is a portmanteau of
+
 # Local Variables:
 # org-confirm-babel-evaluate: (lambda (lang body) (not (string= lang "elisp")))
-# eval: (org-babel-goto-named-src-block "startup") (org-babel-execute-src-block)
+# eval: (progn
+#         (when (fboundp 'org-babel-goto-named-src-block)
+#           (org-babel-goto-named-src-block "startup")
+#           (org-babel-execute-src-block)))
 # End:
