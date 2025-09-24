@@ -26,8 +26,20 @@ If you wish to export the RedHat/Fedora specific version of the document, you wi
 Alternatively, you can just hit =C-c C-c= on the block below to have Emacs to this for you!
 
 #+NAME: switch_distro
-#+BEGIN_SRC elisp :results none :eval never-export :var os="Debian"
-
+#+BEGIN_SRC elisp :results none :eval never-export :var os="RedHat"
+  (let* ((debian (string= os "Debian"))
+         (no_export (if debian "redhat" "debian"))
+         (prefix (if debian "deb_" "rh_")))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward "^#\\+SUBTITLE:.*" nil t)
+        (replace-match (concat "#+SUBTITLE: " (format "%s Edition" os))))
+      (when (re-search-forward "^#\\+EXCLUDE_TAGS:.*" nil t)
+        (replace-match (concat "#+EXCLUDE_TAGS: noexport " no_export)))
+      (when (re-search-forward "^#\\+EXPORT_FILE_NAME:.*" nil t)
+        (replace-match (format "#+EXPORT_FILE_NAME: %sbuildemacs" prefix)))
+      (when (re-search-forward "^:prefix:.*" nil t)
+        (replace-match (concat ":prefix: " prefix)))))
 #+END_SRC
 * Document constants :noexport:
 :PROPERTIES:
