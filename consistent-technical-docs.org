@@ -1,0 +1,33 @@
+#+TITLE: Git From the Ground Up
+#+AUTHOR: Fabricio Puente Mansilla
+#+DATE: <2025-10-02 Thu>
+#+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
+#+PROPERTY: header-args :dir ~/projects/git/github/fpuentem/literate-documentation-org-mode
+#+INCLUDE: code.inc
+* Introduction
+We're going to learn a little something about the git data model by crafting the ~.git~ directory and blob objects by hand. It'll be fun!
+
+* Where are we. and is git happy?
+Let's start by seeing where we are, and if we're in a valid git repository.
+
+#+BEGIN_SRC shell
+  echo "How about now: $(dirs +0)"
+  ls -l
+#+END_SRC
+
+#+RESULTS:
+| How        | about | now:     | ~/projects/git/github/fpuentem/literate-documentation-org-mode |       |     |    |       |                                |
+| total      |    40 |          |                                                                |       |     |    |       |                                |
+| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |  3637 | Oct |  2 | 18:35 | consistent-technical-docs.html |
+| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |  2102 | Oct |  2 | 18:39 | consistent-technical-docs.org  |
+| -rw-rw-r-- |     1 | fabricio | fabricio                                                       | 10341 | Jul | 11 | 16:37 | demo.odt                       |
+| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |  3208 | Sep | 24 | 18:47 | demo.org                       |
+| -rw-rw-r-- |     1 | fabricio | fabricio                                                       | 10336 | Sep | 24 | 18:08 | rh_buildemacs.odt              |
+| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |   617 | Jul | 18 | 18:07 | rh_buildemacs.txt              |
+
+#+BEGIN_EXAMPLE
+My current working dir is: ~/projects/git/github/fpuentem/literate-documentation-org-mode
+#+END_EXAMPLE
+* Heading 2
+
+* Heading 3
