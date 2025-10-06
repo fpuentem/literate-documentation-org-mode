@@ -2,8 +2,9 @@
 #+AUTHOR: Fabricio Puente Mansilla
 #+DATE: <2025-10-02 Thu>
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
-#+PROPERTY: header-args :dir ~/projects/git/github/fpuentem/literate-documentation-org-mode
+#+PROPERTY: header-args :dir ~/projects/git/github/fpuentem/org/tmp :results output replace :exports both
 #+INCLUDE: code.inc
+
 * Introduction
 We're going to learn a little something about the git data model by crafting the ~.git~ directory and blob objects by hand. It'll be fun!
 
@@ -11,23 +12,52 @@ We're going to learn a little something about the git data model by crafting the
 Let's start by seeing where we are, and if we're in a valid git repository.
 
 #+BEGIN_SRC shell
-  echo "How about now: $(dirs +0)"
-  ls -l
+  echo "My current working dir is: $(dirs +0)"
+  git status 2>&1 || echo "Git is not happy."
 #+END_SRC
 
 #+RESULTS:
-| How        | about | now:     | ~/projects/git/github/fpuentem/literate-documentation-org-mode |       |     |    |       |                                |
-| total      |    40 |          |                                                                |       |     |    |       |                                |
-| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |  3637 | Oct |  2 | 18:35 | consistent-technical-docs.html |
-| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |  2102 | Oct |  2 | 18:39 | consistent-technical-docs.org  |
-| -rw-rw-r-- |     1 | fabricio | fabricio                                                       | 10341 | Jul | 11 | 16:37 | demo.odt                       |
-| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |  3208 | Sep | 24 | 18:47 | demo.org                       |
-| -rw-rw-r-- |     1 | fabricio | fabricio                                                       | 10336 | Sep | 24 | 18:08 | rh_buildemacs.odt              |
-| -rw-rw-r-- |     1 | fabricio | fabricio                                                       |   617 | Jul | 18 | 18:07 | rh_buildemacs.txt              |
+| My     | current | working | dir    | is:        | ~/projects/git/github/fpuentem/org/tmp |     |    |     |        |               |      |
+| fatal: | not     | a       | git    | repository | (or                                    | any | of | the | parent | directories): | .git |
+| Git    | is      | not     | happy. |            |                                        |     |    |     |        |               |      |
 
-#+BEGIN_EXAMPLE
-My current working dir is: ~/projects/git/github/fpuentem/literate-documentation-org-mode
-#+END_EXAMPLE
-* Heading 2
+* Let's create the .git directory
+Ok, so we know that we need a ~.git~ directory to start things off. Let's create one and fill it with the stuff that git needs.
 
-* Heading 3
+#+BEGIN_SRC shell
+  mkdir -p .git
+  mkdir -p .git/objects
+  mkdir -p .git/refs
+  mkdir -p .git/refs/heads
+  echo "ref: refs/heads/master" > .git/HEAD
+  tree .git
+  git status 2>&1 && echo "Git is happy!"
+#+END_SRC
+
+#+RESULTS:
+| .git    |              |        |              |       |     |     |      |      |    |        |
+| ├──     | HEAD         |        |              |       |     |     |      |      |    |        |
+| ├──     | objects      |        |              |       |     |     |      |      |    |        |
+| └──     | refs         |        |              |       |     |     |      |      |    |        |
+| └──     | heads        |        |              |       |     |     |      |      |    |        |
+|         |              |        |              |       |     |     |      |      |    |        |
+| 3       | directories, | 1      | file         |       |     |     |      |      |    |        |
+| On      | branch       | master |              |       |     |     |      |      |    |        |
+|         |              |        |              |       |     |     |      |      |    |        |
+| No      | commits      | yet    |              |       |     |     |      |      |    |        |
+|         |              |        |              |       |     |     |      |      |    |        |
+| nothing | to           | commit | (create/copy | files | and | use | "git | add" | to | track) |
+| Git     | is           | happy! |              |       |     |     |      |      |    |        |
+
+* Let's hash something!
+We're going to hash the string "call_hello[:results raw]()" by using the git plumbing command ~hash project~.
+
+#+BEGIN_SRC sh
+echo -n '<hello()>>' | git hash-object --stdin -w
+#+END_SRC
+
+#+NAME: hashobject
+#+RESULTS:
+: 85cf9669abfd711cf19e53d8c54818a3b260b543
+
+We've asked git to hash the content we passed in via _STDIN_ and we've also asked it to store it in the object database. It returned 40 character SHA1 hash of the content, and if you've ever worked with git before, you've likely seen one of these. You can also refer to this hash by its first four characters like  call_short_hash(line=hashobject) which is pretty handy.
