@@ -4,9 +4,11 @@
 #+SETUPFILE: https://fniessen.github.io/org-html-themes/org/theme-readtheorg.setup
 #+PROPERTY: header-args :dir ~/projects/git/github/fpuentem/org/tmp :results output replace :exports both
 #+INCLUDE: code.inc
+#+CALL: init()
 
 * Introduction
-We're going to learn a little something about the git data model by crafting the ~.git~ directory and blob objects by hand. It'll be fun!
+We're going to learn a little something about the git data model by
+crafting the ~.git~ directory and blob objects by hand. It'll be fun!
 
 * Where are we. and is git happy?
 Let's start by seeing where we are, and if we're in a valid git repository.
@@ -17,12 +19,13 @@ Let's start by seeing where we are, and if we're in a valid git repository.
 #+END_SRC
 
 #+RESULTS:
-| My     | current | working | dir    | is:        | ~/projects/git/github/fpuentem/org/tmp |     |    |     |        |               |      |
-| fatal: | not     | a       | git    | repository | (or                                    | any | of | the | parent | directories): | .git |
-| Git    | is      | not     | happy. |            |                                        |     |    |     |        |               |      |
+: My current working dir is: ~/projects/git/github/fpuentem/org/tmp
+: fatal: not a git repository (or any of the parent directories): .git
+: Git is not happy.
 
 * Let's create the .git directory
-Ok, so we know that we need a ~.git~ directory to start things off. Let's create one and fill it with the stuff that git needs.
+Ok, so we know that we need a ~.git~ directory to start things
+off. Let's create one and fill it with the stuff that git needs.
 
 #+BEGIN_SRC shell
   mkdir -p .git
@@ -35,29 +38,148 @@ Ok, so we know that we need a ~.git~ directory to start things off. Let's create
 #+END_SRC
 
 #+RESULTS:
-| .git    |              |        |              |       |     |     |      |      |    |        |
-| ├──     | HEAD         |        |              |       |     |     |      |      |    |        |
-| ├──     | objects      |        |              |       |     |     |      |      |    |        |
-| └──     | refs         |        |              |       |     |     |      |      |    |        |
-| └──     | heads        |        |              |       |     |     |      |      |    |        |
-|         |              |        |              |       |     |     |      |      |    |        |
-| 3       | directories, | 1      | file         |       |     |     |      |      |    |        |
-| On      | branch       | master |              |       |     |     |      |      |    |        |
-|         |              |        |              |       |     |     |      |      |    |        |
-| No      | commits      | yet    |              |       |     |     |      |      |    |        |
-|         |              |        |              |       |     |     |      |      |    |        |
-| nothing | to           | commit | (create/copy | files | and | use | "git | add" | to | track) |
-| Git     | is           | happy! |              |       |     |     |      |      |    |        |
+#+begin_example
+.git
+├── HEAD
+├── objects
+└── refs
+    └── heads
+
+3 directories, 1 file
+On branch master
+
+No commits yet
+
+nothing to commit (create/copy files and use "git add" to track)
+Git is happy!
+#+end_example
 
 * Let's hash something!
-We're going to hash the string "call_hello[:results raw]()" by using the git plumbing command ~hash project~.
-
-#+BEGIN_SRC sh
-echo -n '<hello()>>' | git hash-object --stdin -w
-#+END_SRC
+We're going to hash the string "call_hello[:results raw]()" by using
+the git plumbing command ~hash project~.
 
 #+NAME: hashobject
-#+RESULTS:
-: 85cf9669abfd711cf19e53d8c54818a3b260b543
+#+BEGIN_SRC sh :noweb yes
+  echo -n '<<hello()>>' | git hash-object --stdin -w
+#+END_SRC
 
-We've asked git to hash the content we passed in via _STDIN_ and we've also asked it to store it in the object database. It returned 40 character SHA1 hash of the content, and if you've ever worked with git before, you've likely seen one of these. You can also refer to this hash by its first four characters like  call_short_hash(line=hashobject) which is pretty handy.
+#+RESULTS: 
+
+We've asked git to hash the content we passed in via _STDIN_ and we've
+also asked it to store it in the object database. It returned 40
+character SHA1 hash of the content, and if you've ever worked with git
+before, you've likely seen one of these. You can also refer to this
+hash by its first four characters like
+call_short_hash(line=hashobject) which is pretty handy.
+
+* Where did git put it?
+Let's see how that was stored in the ~.git~ directory.
+
+#+BEGIN_SRC shell
+  tree .git
+#+END_SRC
+
+#+RESULTS:
+: .git
+: ├── HEAD
+: ├── objects
+: │   └── e6
+: │       └── 9de29bb2d1d6434b8b29ae775ad8c2e48c5391
+: └── refs
+:     └── heads
+: 
+: 4 directories, 2 files
+Because file systems get angry with you when you try to stash too many
+files in the same directory, git shards the directory based on the
+first two bytes of the hash.
+
+* Can we just look at the object?
+Nope. Git stores the objects in compressed format , but we can use git
+~cat-file~ to take a peek inside it. We'll run it with the -p argument
+to pretty-print the object.
+
+#+NAME: myhello
+#+BEGIN_SRC shell :noweb yes
+  git cat-file -p <<short_hash(line=hashobject)>>
+#+END_SRC
+
+#+RESULTS: 
+
+* Let's do it ourselves
+OK, let's fugure out how git compresses the file.
+
+#+BEGIN_SRC shell :noweb yes
+  cat <<hash_to_dir(line=hashobject)>> | file -
+  cat <<hash_to_dir(line=hashobject)>> | gunzip || echo Nope.
+#+END_SRC
+
+#+RESULTS:
+
+Neither ~file~ or ~gunzip~ know quite what to make of it. I happen to know
+that it's a _zlib_ stream. The program ~pigz~ can deal with these.
+
+#+BEGIN_SRC shell :noweb yes
+  cat <<hash_to_dir(line=hashobject)>> | pigz -d | hexdump -C
+#+END_SRC
+
+#+RESULTS:
+
+We can see from the hex output that git is storing our hashed string
+with a header, which contains ~blob~ which is the type of thing we're
+storing, followed by call_strlen(line=myhello), which is the number of
+bytes of the thing we're storing, followed by a null byte.
+
+Since we're doing things from the ground up, let's hash it ourselves
+using Python.
+
+#+BEGIN_SRC python :noweb yes
+  import hashlib
+  hashme = '<<hello()>>'
+  header = "blob " + str(len(hashme)) + "\0"
+  myblob = (header + hashme).encode('utf8')
+  gitsha = hashlib.sha1(myblob).hexdigest()
+
+  print(gitsha)
+#+END_SRC
+
+#+RESULTS:
+
+so now, we've figured out how to hash the string like git would, now
+we just need to compress it and save it. First let's get rid of the
+object we previously created.
+
+#+BEGIN_SRC shell :noweb yes :exports code :results silent
+  rm <<hash_to_dir(line=hashobject)>>
+#+END_SRC
+
+Here we go, this will be much like the previous program except now it
+will compress and then save the file!
+
+#+BEGIN_SRC python :noweb yes
+  import hashlib
+  import zlib
+
+  hashme = '<<hello()>>'
+  header = "blob " + str(len(hashme)) + "\0"
+  myblob = (header + hashme).encode('utf8')
+  gitsha = hashlib.sha1(myblob).hexdigest()
+
+  # Calculate filename
+  gitobj = f".git/objects/{gitsha[:2]}/{gitsha[2:]}"
+
+  # Write out the binary bytes!
+  myfile = open(gitobj, 'wb')
+  myfile.write(zlib.compress(myblob))
+  myfile.close()
+  print(f"wrote: {gitobj}")
+#+END_SRC
+
+* Did it work!?
+Now let's use git ~cat-file~ to verify that our program did everything right.
+
+#+BEGIN_SRC shell
+  git cat-file -p <<short_hash(line=hashobject)>>
+#+END_SRC
+
+* Final thoughts
+In future post, I'll show you how we can use similar techniques to craft git trees and commmits. See ya then!
